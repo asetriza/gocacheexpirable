@@ -18,10 +18,11 @@ func New(db *sql.DB) *dataBase {
 func (db dataBase) Fetch(id int) (string, error) {
 	var code string
 	err := db.database.QueryRow("SELECT code FROM ISO4217 WHERE id=?", id).Scan(&code)
-	switch {
-	case err == sql.ErrNoRows:
-		log.Printf("select from database: no code with id %d\n", id)
-	case err != nil:
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("select from database: no code with id %d\n", id)
+			return "", err
+		}
 		log.Println(err)
 		return "", err
 	}

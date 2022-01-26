@@ -36,5 +36,4 @@ func (ha *HttpAPI) locationsURL(query string) (string, *url.URL) {
 	u.RawQuery = rq.Encode()
 
 	return ha.Endpoints.Locations.Method, u
-
 }

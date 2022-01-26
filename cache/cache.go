@@ -35,9 +35,11 @@ func New(f fetch.Fetcher) (*hcache, error) {
 		mu:     sync.RWMutex{},
 		fetch:  f,
 	}
+
 	if err := hc.fetchAll(); err != nil {
 		return nil, err
 	}
+
 	return hc, nil
 }
 
@@ -46,7 +48,9 @@ func (hc *hcache) fetchAll() error {
 	if err != nil {
 		return err
 	}
+
 	hc.m = m
+
 	return nil
 }
 
@@ -61,11 +65,13 @@ func (hc *hcache) Get(id int) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
 		hc.mu.Lock()
 		hc.m[id] = value
 		hc.mu.Unlock()
 		return value, err
 	}
+
 	return value, nil
 }
 

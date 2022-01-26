@@ -23,9 +23,11 @@ func (db dataBase) Fetch(id int) (string, error) {
 			log.Printf("select from database: no code with id %d\n", id)
 			return "", err
 		}
+
 		log.Println(err)
 		return "", err
 	}
+
 	log.Printf("select from database: id is %d, code is %s\n", id, code)
 	return code, nil
 }

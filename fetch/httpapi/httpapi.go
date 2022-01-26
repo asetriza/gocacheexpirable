@@ -3,10 +3,12 @@ package httpapi
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -34,69 +36,37 @@ type Endpoints struct {
 func (ha HttpAPI) Fetch(id int) (string, error) {
 
 	method, url := ha.locationURL(defaultLtype, defaultKey, fmt.Sprint(id))
-	request, err := http.NewRequest(method, fmt.Sprint(url), bytes.NewBuffer([]byte{}))
+	body, err := ha.makeRequest(method, url)
 	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-	request.Header.Set("Content-type", "application/json")
-
-	client := http.Client{
-		Timeout: ha.Timeout,
-	}
-	resp, err := client.Do(request)
-	if err != nil {
-		log.Println(err)
 		return "", err
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	var location LocationBody
+	var location Locations
 	err = json.Unmarshal(body, &location)
 	if err != nil {
-		log.Println(err)
+		log.Println("unmarshal error", err)
 		return "", err
 	}
-	return fmt.Sprint(location.Locations[0].IntID), nil
+
+	if len(location.Locations) == 0 {
+		return "", errors.New("No location")
+	}
+	return fmt.Sprint(location.Locations[0].ID), nil
 }
 
 func (ha HttpAPI) FetchAll() (map[int]string, error) {
 
 	method, url := ha.locationsURL(defaultQuery)
-	request, err := http.NewRequest(method, fmt.Sprint(url), bytes.NewBuffer([]byte{}))
+	body, err := ha.makeRequest(method, url)
 	if err != nil {
-		log.Println("req", err)
-		return map[int]string{}, nil
-	}
-	request.Header.Set("Content-type", "application/json")
-
-	client := http.Client{
-		Timeout: ha.Timeout,
-	}
-	resp, err := client.Do(request)
-	if err != nil {
-		log.Println("do error", err)
-		return map[int]string{}, nil
+		return map[int]string{}, err
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return map[int]string{}, nil
-	}
-	defer resp.Body.Close()
-
-	var locations LocationsBody
+	var locations Locations
 	err = json.Unmarshal(body, &locations)
 	if err != nil {
 		log.Println("unmarshal error", err)
-		return map[int]string{}, nil
+		return map[int]string{}, err
 	}
 
 	m := make(map[int]string)
@@ -105,4 +75,31 @@ func (ha HttpAPI) FetchAll() (map[int]string, error) {
 	}
 
 	return m, nil
+}
+
+func (ha HttpAPI) makeRequest(method string, url *url.URL) ([]byte, error) {
+	request, err := http.NewRequest(method, fmt.Sprint(url), bytes.NewBuffer([]byte{}))
+	if err != nil {
+		log.Println("req", err)
+		return []byte{}, err
+	}
+	request.Header.Set("Content-type", "application/json")
+
+	client := http.Client{
+		Timeout: ha.Timeout,
+	}
+	resp, err := client.Do(request)
+	if err != nil {
+		log.Println("http client do error", err)
+		return []byte{}, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		return []byte{}, err
+	}
+	defer resp.Body.Close()
+
+	return body, nil
 }

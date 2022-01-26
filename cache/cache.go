@@ -12,6 +12,16 @@ type Cacher interface {
 	Get(id int) (string, error)
 }
 
+type Cache struct {
+	C Cacher
+}
+
+func NewCacher(c Cacher) *Cache {
+	return &Cache{
+		C: c,
+	}
+}
+
 type hcache struct {
 	m      map[int]string
 	mu     sync.RWMutex

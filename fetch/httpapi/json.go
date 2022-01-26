@@ -1,12 +1,6 @@
 package httpapi
 
-type LocationBody struct {
-	Locations []struct {
-		IntID int `json:"int_id"`
-	} `json:"locations"`
-}
-
-type LocationsBody struct {
+type Locations struct {
 	Locations []Location `json:"locations"`
 }
 

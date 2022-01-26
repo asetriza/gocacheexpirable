@@ -30,16 +30,24 @@ type hcache struct {
 }
 
 func New(f fetch.Fetcher) (*hcache, error) {
-	hc := &hcache{}
-	hc.fetch = f
-	m, err := hc.fetch.FetchAll()
-	if err != nil {
+	hc := &hcache{
+		doneCh: make(chan struct{}),
+		mu:     sync.RWMutex{},
+		fetch:  f,
+	}
+	if err := hc.fetchAll(); err != nil {
 		return nil, err
 	}
-	hc.m = m
-	hc.mu = sync.RWMutex{}
-	hc.doneCh = make(chan struct{})
 	return hc, nil
+}
+
+func (hc *hcache) fetchAll() error {
+	m, err := hc.fetch.FetchAll()
+	if err != nil {
+		return err
+	}
+	hc.m = m
+	return nil
 }
 
 func (hc *hcache) Get(id int) (string, error) {
@@ -47,7 +55,9 @@ func (hc *hcache) Get(id int) (string, error) {
 	value, found := hc.m[id]
 	hc.mu.RUnlock()
 	if !found {
+		hc.mu.Lock()
 		value, err := hc.fetch.Fetch(id)
+		hc.mu.Unlock()
 		if err != nil {
 			return "", err
 		}

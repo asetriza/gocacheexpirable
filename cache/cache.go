@@ -80,7 +80,7 @@ func (hc *hcache) reloadIn(dur time.Duration) {
 }
 
 func (hc *hcache) clear() {
-	fmt.Println("reload started")
+	fmt.Println("Cache cleaned")
 	hc.mu.Lock()
 	defer hc.mu.Unlock()
 	for key := range hc.m {

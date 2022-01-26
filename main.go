@@ -55,22 +55,21 @@ func main() {
 	}
 
 	f1 := fetch.New(api)
-	// value, err := f1.F.Fetch(50)
-	// if err != nil {
-	// 	log.Println(err)
-	// }
-	// fmt.Println(value)
-	// values, err := f1.F.FetchAll()
-	// if err != nil {
-	// 	log.Println(err)
-	// }
-	// fmt.Println(len(values))
 
 	c, err := cache.New(f1.F)
 	if err != nil {
 		fmt.Println(err)
 	}
-	c.ReloadEvery(time.Duration(7 * time.Second))
+
+	go func() {
+		err := c.ReloadEvery(time.Duration(7 * time.Second))
+		select {
+		case err := <-err:
+			fmt.Println(err)
+		default:
+			fmt.Println("ok")
+		}
+	}()
 
 	cache := cache.NewCacher(c)
 

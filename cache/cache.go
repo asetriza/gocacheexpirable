@@ -44,6 +44,8 @@ func New(f fetch.Fetcher) (*hcache, error) {
 }
 
 func (hc *hcache) fetchAll() error {
+	hc.mu.Lock()
+	defer hc.mu.Unlock()
 	m, err := hc.fetch.FetchAll()
 	if err != nil {
 		return err
@@ -75,11 +77,13 @@ func (hc *hcache) Get(id int) (string, error) {
 	return value, nil
 }
 
-func (hc *hcache) ReloadEvery(dur time.Duration) {
-	go hc.reloadIn(dur)
+func (hc *hcache) ReloadEvery(dur time.Duration) chan error {
+	errCh := make(chan error)
+	go hc.reloadIn(dur, errCh)
+	return errCh
 }
 
-func (hc *hcache) reloadIn(dur time.Duration) {
+func (hc *hcache) reloadIn(dur time.Duration, errCh chan error) {
 	t := time.NewTicker(dur)
 	defer func() {
 		t.Stop()
@@ -91,6 +95,7 @@ func (hc *hcache) reloadIn(dur time.Duration) {
 			return
 		case _ = <-t.C:
 			hc.clear()
+			errCh <- hc.fetchAll()
 		}
 	}
 }

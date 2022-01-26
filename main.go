@@ -69,6 +69,8 @@ func main() {
 	// fmt.Println(len(values))
 
 	c, err := cache.New(f.F)
+	c.ReloadEvery(time.Duration(7 * time.Second))
+
 	fmt.Println("Hello, world!", err)
 	time1 := time.Now()
 	value, err := c.Get(2000)
@@ -85,6 +87,9 @@ func main() {
 	fmt.Println(time.Now().Sub(time3))
 	fmt.Println("value: ", value, "err:", err)
 
+	fmt.Println("Sleep zzzzzz")
+	time.Sleep(time.Duration(8 * time.Second))
+
 	time4 := time.Now()
 	value, err = c.Get(50)
 	fmt.Println(time.Now().Sub(time4))
@@ -93,5 +98,5 @@ func main() {
 	time5 := time.Now()
 	value, err = c.Get(50)
 	fmt.Println(time.Now().Sub(time5))
-	fmt.Println("value: ", value, "err:", err)
+	fmt.Println("last value: ", value, "err:", err)
 }
